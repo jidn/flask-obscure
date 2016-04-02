@@ -11,7 +11,7 @@ from werkzeug.routing import BaseConverter, IntegerConverter
 from obscure import Obscure as _mod_Obscure, _base32_custom as _tame_alphabet
 
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 class Obscure(_mod_Obscure):
@@ -28,7 +28,6 @@ class Obscure(_mod_Obscure):
           app: a :class:`flask:Flask' instance or None
           salt (integer): random 32-bit integer for uniqueness
         """
-        self.app = app
         self.salt = salt
         if app is not None:
             self.init_app(app, self.salt)
@@ -44,7 +43,7 @@ class Obscure(_mod_Obscure):
             KeyError: ``OBSCURE_SALT`` must be in the
              :class:`flask.Config` if it is not given as a parameter.
         """
-        salt = salt or int(app.config['OBSCURE_SALT'])
+        salt = salt or self.salt or int(app.config['OBSCURE_SALT'])
         _mod_Obscure.__init__(self, salt)
 
         for converter_name, base in converters.items():
