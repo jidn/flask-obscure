@@ -34,36 +34,40 @@ Converters and Filters
 =======================================
 
 There are five new converters: ``num``, ``hex``, ``b32``, ``b64``, and ``tame``.
-Lets assume we are using :func:`flask.url_for` to create the URLs for two sequential customer IDs.
+Lets assume we are using :func:`flask.url_for` to create the URLs for two sequential customer IDs.  Lets take a look and the obscured numbers for 1 - 10 with a salt of 4049.
 
 ``num``
     Non-sequential numbers::
 
-        /customer/3303953358
-        /customer/1151314503
+    3363954640 781239386 2649118836 1498905894 2772037181
+    842981965 240566679 3654613332 2665083367
+
 
 ``hex``
     Hexadecimal displays in eight characters::
 
-        /customer/c4ee53c3
-        /customer/449faa47
+    c881dfd0 2e90c45a 9de65874 59577d26 a539ee3d
+    323ee24d 0e56c197 d9d4f954 9ed9f1e7
 
 ``b32``
     Base32 displays in seven characters::
 
-        /customer/YTXFHTQ
-        /customer/ISP2URY
+    ZCA57UA F2IMIWQ TXTFQ5A LFLX2JQ UU464PI
+    GI7OETI BZLMDFY 3HKPSVA T3M7DZY
 
 ``b64``
-    Base64 URL safe displays in six cahracters::
+    Base64 URL safe displays in six characters::
 
-        /customer/xO5Tzg
-        /customer/RJ-qRw
+    yIHf0A LpDEWg neZYdA WVd9Jg pTnuPQ
+    Mj7iTQ DlbBlw 2dT5VA ntnx5w
 
 ``tame``
     Is a Base32 with a rotated, alternate alphabet.
     The letters 'I', 'O', and 'U' are replaced with the numbers '8', '9', and '0' to avoid common offensive words.
     Otherwise, it performs just like Base32.
+
+    6EC0BZC H7LQL3V Y4YHV0C PHP47MV ZZ9A9TL
+    JLBSGYL D6PQFH5 8KNTX2C Y8QBF65
 
 
 Install
