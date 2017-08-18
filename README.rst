@@ -1,15 +1,10 @@
+|version| |build| |coverage| |pyversions|
+
 =======================================
 Flask-Obscure
 =======================================
 
-.. currentmodule:: flask_obscure
-
-.. toctree::
-    :maxdepth: 2
-    :hidden:
-
-    self
-    api
+.. contents::
 
 Showing a steadily increasing sequence of integer IDs leaks information to customers, competitors, or malicious entities about the number and frequency of customers, orders, etc.  Some URL example include::
 
@@ -23,7 +18,7 @@ Features
 =======================================
 
  *  Automatically obscures sequential integer IDs in the variable
-    part of a URL when using :func:`flask.url_for`
+    part of a URL when using ``flask.url_for``
  *  Automatically converts obscured IDs back to your sequential
     integer IDs in the parameter of the function bound to the URL.
  *  Jinja filters automatically available.
@@ -34,7 +29,7 @@ Converters and Filters
 =======================================
 
 There are five new converters: ``num``, ``hex``, ``b32``, ``b64``, and ``tame``.
-Lets assume we are using :func:`flask.url_for` to create the URLs for two sequential customer IDs.  Lets take a look and the obscured numbers for 1 - 10 with a salt of 4049.
+Lets assume we are using ``flask.url_for`` to create the URLs for two sequential customer IDs.  Lets take a look and the obscured numbers for 1 - 10 with a salt of 4049.
 
 ``num``
     Non-sequential numbers::
@@ -80,20 +75,20 @@ Pip is our friend. It will also install the `Obscure`_ module as well. ::
 Configure
 =======================================
 
-The :class:`Obscure` class needs a ``salt`` or random number to make your obscured number sequence unique.  Pick any 32-bit number or use the following snippit to generate one for you::
+The ``Obscure`` class needs a ``salt`` or random number to make your obscured number sequence unique.  Pick any 32-bit number or use the following snippit to generate one for you::
 
     python -c "import os; print(int(os.urandom(4).encode('hex'),16))"
 
-:class:`Obscure` uses the value ``OBSCURE_SALT`` in the flask configuration file if not given as the second parameter to either the constructor or :meth:`Obscure.init_app`.
+``Obscure`` uses the value ``OBSCURE_SALT`` in the flask configuration file if not given as the second parameter to either the constructor or ``Obscure.init_app``.
 
 .. warning::
     If your source goes to a public repository, you will want 
-    to place ``OBSCURE_SALT`` in the :class:`flask.Flask` instance path.
+    to place ``OBSCURE_SALT`` in the ``flask.Flask`` instance path.
 
 Usage
 =======================================
 
-Import the class :class:`Obscure` and initialize the with the :class:`flask.Flask` appliation by either using the constructor
+Import the class ``Obscure`` and initialize the with the ``flask.Flask`` appliation by either using the constructor
 
 .. code-block:: python
     :emphasize-lines: 5
@@ -104,7 +99,7 @@ Import the class :class:`Obscure` and initialize the with the :class:`flask.Flas
     app = Flask(app)
     obscure = Obscure(app)
 
-or by using delayed initialization with :meth:`Obscure.init_app`
+or by using delayed initialization with ``Obscure.init_app``
 
 .. code-block:: python
     :emphasize-lines: 2
@@ -149,7 +144,7 @@ using Jinja2 for templating, those same converters are available as filters.
 Within Code
 ---------------------------------------
 
-To obscure numbers within your code, use the methods of the :class:`flask_obscure.Obscure` instance object, which in turn is inherited from the python module `Obscure`_.  Assuming we used one of the code blocks from `configure`
+To obscure numbers within your code, use the methods of the ``flask_obscure.Obscure`` instance object, which in turn is inherited from the python module `Obscure`_.  Assuming we used one of the code blocks from ``configure``
 
 .. code-block:: python
 
@@ -162,13 +157,22 @@ Contribute
 | Source Code: `http://github.com/jidn/flask-obscure`
 
 
-.. Indices and tables
-   =======================================
-   
-   * :ref:`genindex`
-   * :ref:`modindex`
-   * :ref:`search`
-
 .. _Obscure: http://github.com/jidn/obscure
 .. _Flask: http://flask.pocoo.org/
 .. _Jinja2: http://jinja.pocoo.org/
+
+.. |version| image:: https://img.shields.io/pypi/v/flask-obscure.svg
+    :target: https://pypi.python.org/pypi/flask-obscure
+    :alt: Latest version on PyPi
+
+.. |build| image:: https://img.shields.io/travis/jidn/flask-obscure.svg
+    :target: http://travis-ci.org/jidn/flask-obscure
+    :alt: Build status of the master branch on Linux
+
+.. |coverage| image:: https://coveralls.io/repos/github/jidn/flask-obscure/badge.svg
+    :target: https://coveralls.io/github/jidn/flask-obscure
+    :alt: Code coverage when testing
+
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/flask-obscure.svg
+    :target: https://pypi.python.org/pypi/flask-obscure
+    :alt: Versions on PyPi
