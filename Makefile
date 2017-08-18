@@ -1,166 +1,146 @@
-# github.com/jidn/python-Makefile
 # This helps with creating local virtual environments, requirements,
 # syntax checking, running tests, coverage and uploading packages to PyPI.
-# 
-# This also works with Travis CI
-# For more information on creating packages for PyPI see the writeup at
-# http://peterdowns.com/posts/first-time-with-pypi.html
+# Homepage at https://github.com/jidn/python-Makefile
 #
-.PHONY: help
-help:
-	@echo "env     Create virtualenv and install requirements"
-	@echo "check   Run style checks"
-	@echo "test    Run tests"
-	@echo "pdb     Run tests, but stop at the first unhandled exception."
-	@echo "upload  Upload package to PyPI"
-	@echo "clean clean-all  Clean up and clean up removing virtualenv"
+# This also works with Travis CI
+#
+# PACKAGE = Source code directory or leave empty
+PACKAGE =
+TESTDIR = tests
+PROJECT = Flask-Obscure
+ENV = .env
+# Override by putting on commandline:  python=python2.7
+python = python
+REQUIRE = requirements.txt
+PEP8_IGNORE := E501,E123
+PEP257_IGNORE := D104,D203
 ##############################################################################
-PROJECT := Flask-Obscure
-PACKAGE := flask_obscure.py
-# Replace 'requirements.txt' with another filename if needed.
-REQUIREMENTS := $(wildcard requirements.txt)
-# Directory with all the tests
-TESTDIR := tests
-TESTREQUIREMENTS := $(wildcard $(TESTDIR)/requirements.txt)
-##############################################################################
-# Python settings
 ifdef TRAVIS
 	ENV = $(VIRTUAL_ENV)
-else
-	PYTHON_VERSION := 2.7
-	ENV := env
 endif
-
 # System paths
 BIN := $(ENV)/bin
 OPEN := xdg-open
 SYS_VIRTUALENV := virtualenv
-SYS_PYTHON := python$(PYTHON_VERSION)
 
 # virtualenv executables
 PIP := $(BIN)/pip
 TOX := $(BIN)/tox
-PYTHON := $(BIN)/python
+PYTHON := $(BIN)/$(python)
 FLAKE8 := $(BIN)/flake8
-PEP257 := $(BIN)/pep257
+PEP257 := $(BIN)/pydocstyle
 COVERAGE := $(BIN)/coverage
-TESTRUN := $(BIN)/py.test
+TEST_RUNNER := $(BIN)/py.test
+$(TEST_RUNNER): env
+	$(PIP) install pytest | tee -a $(LOG_REQUIRE)
 
 # Project settings
+PKGDIR := $(or $(PACKAGE), ./)
+REQUIREMENTS := $(shell find ./ -name $(REQUIRE))
 SETUP_PY := $(wildcard setup.py)
-SOURCES := Makefile $(SETUP_PY) \
-	       $(shell find $(PACKAGE) -name '*.py')
-TESTS :=   $(shell find $(TESTDIR) -name '*.py')
+SOURCES := $(wildcard *.py)
 EGG_INFO := $(subst -,_,$(PROJECT)).egg-info
+COVER_ARG := --cov-report term-missing --cov=$(PKGDIR) \
+             --cov-config .coveragerc
 
 # Flags for environment/tools
-ALL := $(ENV)/.all
-DEPENDS_CI := $(ENV)/.depends-ci
-DEPENDS_DEV := $(ENV)/.depends-dev
-# Main Targets ###############################################################
-.PHONY: all env
-all: env $(ALL)
-$(ALL): $(SOURCES)
-	$(MAKE) check
-	@touch $@  # flag to indicate all setup steps were successful
+LOG_REQUIRE := .requirements.log
 
-# Targets to run on Travis
-.PHONY: ci
+### Main Targets #############################################################
+.PHONY: all env ci help
+all: check test
+
+# Target for Travis
 ci: test
 
-# Environment Installation ###################################################
-env: $(PIP) $(ENV)/.requirements $(ENV)/.setup.py
+env: $(PIP) $(LOG_REQUIRE)
 $(PIP):
-	$(SYS_VIRTUALENV) --python $(SYS_PYTHON) $(ENV)
-	@$(MAKE) -s $(ENV)/.requirements
-	@$(MAKE) -s $(ENV)/.setup.py
+	$(info "Environment is $(ENV)")
+	test -d $(ENV) || $(SYS_VIRTUALENV) --python $(python) $(ENV)
 
-$(ENV)/.requirements: $(REQUIREMENTS)
-ifneq ($(REQUIREMENTS),)
-	$(PIP) install --upgrade -r requirements.txt
-	@echo "Upgrade or install requirements.txt complete."
-endif
-	@touch $@
+$(LOG_REQUIRE): $(REQUIREMENTS)
+	for f in $(REQUIREMENTS); do \
+	  $(PIP) install -r $$f | tee -a $(LOG_REQUIRE); \
+	done
+	touch $@
 
-$(ENV)/.setup.py: $(SETUP_PY)
-ifneq ($(SETUP_PY),)
-	$(PIP) install -e .
-endif
-	@touch $@
+help:
+	@echo "env        Create virtualenv and install requirements"
+	@echo "             python=PYTHON_EXE   interpreter to use, default=python"
+	@echo "check      Run style checks"
+	@echo "test       TEST_RUNNER on '$(TESTDIR)'"
+	@echo "             args=\"-x --pdb --ff\"  optional arguments"
+	@echo "coverage   Get coverage information, optional 'args' like test"
+	@echo "tox        Test against multiple versions of python"
+	@echo "upload     Upload package to PyPI"
+	@echo "clean clean-all  Clean up and clean up removing virtualenv"
 
 ### Static Analysis & Travis CI ##############################################
-.PHONY: check flake8 pep257 tox
+.PHONY: check flake8 pep257
+check: flake8 pep257
 
-PEP8_IGNORED := E501,E123,D104,D203,E126
-check: flake8 pep257 tox
+$(FLAKE8): $(PIP)
+	$(PIP) install --upgrade flake8 pydocstyle | tee -a $(LOG_REQUIRE)
 
-$(DEPENDS_CI): env $(TESTREQUIREMENTS)
-	$(PIP) install --upgrade flake8 pep257 tox
-	@touch $@  # flag to indicate dependencies are installed
+flake8: $(FLAKE8)
+	$(FLAKE8) $(or $(PACKAGE), $(SOURCES)) $(TESTDIR) --ignore=$(PEP8_IGNORE)
 
-$(DEPENDS_DEV): env
-	$(PIP) install --upgrade wheel  # pygments wheel
-	@touch $@  # flag to indicate dependencies are installed
-
-flake8: $(DEPENDS_CI)
-	$(FLAKE8) $(PACKAGE) $(TESTDIR) --ignore=$(PEP8_IGNORED)
-
-pep257: $(DEPENDS_CI)
-	$(PEP257) $(PACKAGE) $(TESTDIR) --ignore=$(PEP8_IGNORED)
-
-tox: $(DEPENDS_CI)
-	$(TOX)
+pep257: $(FLAKE8)
+	$(PEP257) $(or $(PACKAGE), $(SOURCES)) $(ARGS) --ignore=$(PEP257_IGNORE)
 
 ### Testing ##################################################################
-.PHONY: test pdb coverage
+.PHONY: test coverage tox
 
-TESTRUN_OPTS := --cov $(PACKAGE) \
-			   --cov-report term-missing \
-			   --cov-report html 
+test: $(TEST_RUNNER)
+	$(TEST_RUNNER) $(args) $(TESTDIR)
 
-test: env $(DEPENDS_CI) $(TESTS) $(ENV)/requirements-test
-	$(TESTRUN) $(TESTDIR)/ $(TESTRUN_OPTS)
+coverage: $(COVERAGE)
+# NOTE | If PACKAGE is root directory, ie code is not in its own directory,
+#      | then you should use a .coveragerc file to omit the ENV directory
+#      | from the coverage search.
+#      | $ echo -e "[run]\nomit=$(ENV)/*" > .coveragerc
+#      | append "--cov-config .coveragerc" to COVER_ARG
+	$(TEST_RUNNER) $(args) $(COVER_ARG) $(TESTDIR)
 
-pdb: env $(DEPENDS_CI) $(TEST) $(ENV)/requirements-test
-	$(TESTRUN) $(TESTDIR)/*.py $(TESTRUN_OPTS) -x --pdb
+$(COVERAGE): env
+	$(PIP) install pytest-cov | tee -a $(LOG_REQUIRE)
 
-$(ENV)/requirements-test: $(TESTREQUIREMENTS)
-ifneq ($(TESTREQUIREMENTS),)
-	$(PIP) install --upgrade -r $(TESTREQUIREMENTS)
-	@echo "Testing requirements installed."
-endif
-	@touch $@
+tox: $(TOX)
+	$(TOX)
 
-coverage: test
-	$(COVERAGE) html
-	$(OPEN) htmlcov/index.html
+$(TOX): $(PIP)
+	$(PIP) install tox | tee -a $(LOG_REQUIRE)
 
-# Cleanup ####################################################################
-.PHONY: clean clean-env clean-all .clean-build .clean-test .clean-dist
+### Cleanup ##################################################################
+.PHONY: clean clean-env clean-all clean-build clean-test clean-dist
 
-clean: .clean-dist .clean-test .clean-build
-	@rm -rf $(ALL)
+clean: clean-dist clean-test clean-build
 
 clean-env: clean
-	@rm -rf $(ENV)
+	-@rm -rf $(ENV)
+	-@rm -rf $(LOG_REQUIRE)
+	-@rm -rf .tox
 
 clean-all: clean clean-env
 
-.clean-build:
-#	@find -name $(PACKAGE).c -delete
-	@find $(TESTDIR) -name '*.pyc' -delete
-	@find $(TESTDIR) -name '__pycache__' -delete
-	@rm -rf $(EGG_INFO)
-	@rm -rf __pycache__
+clean-build:
+	@find $(PKGDIR) -name '*.pyc' -delete
+	@find $(PKGDIR) -name '__pycache__' -delete
+	@find $(TESTDIR) -name '*.pyc' -delete 2>/dev/null || true
+	@find $(TESTDIR) -name '__pycache__' -delete 2>/dev/null || true
+	-@rm -rf $(EGG_INFO)
+	-@rm -rf __pycache__
 
-.clean-test:
-	@rm -rf .coverage
-#	@rm -f *.log
+clean-test:
+	-@rm -rf .cache
+	-@rm -rf .coverage
 
-.clean-dist:
-	@rm -rf dist build
+clean-dist:
+	-@rm -rf dist build
 
-# Release ####################################################################
+### Release ##################################################################
+# For more information on creating packages for PyPI see the writeup at
+# http://peterdowns.com/posts/first-time-with-pypi.html
 .PHONY: authors register dist upload .git-no-changes
 
 authors:
@@ -188,7 +168,7 @@ upload: .git-no-changes register
 		exit -1;                                  \
 	fi;
 
-# System Installation ########################################################
+### System Installation ######################################################
 .PHONY: develop install download
 # Is this section really needed?
 
