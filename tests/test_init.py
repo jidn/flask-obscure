@@ -1,5 +1,6 @@
 import pytest
 from flask import Flask
+import context
 from flask.ext.obscure import Obscure
 from test_filter import B
 
