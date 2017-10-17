@@ -77,7 +77,7 @@ Configure
 
 The ``Obscure`` class needs a ``salt`` or random number to make your obscured number sequence unique.  Pick any 32-bit number or use the following snippit to generate one for you::
 
-    python -c "import os; print(int(os.urandom(4).encode('hex'),16))"
+    python -c "import uuid; print(uuid.uuid1().int >> 96)"
 
 ``Obscure`` uses the value ``OBSCURE_SALT`` in the flask configuration file if not given as the second parameter to either the constructor or ``Obscure.init_app``.
 
