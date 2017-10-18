@@ -61,7 +61,7 @@ class Num(IntegerConverter):
     Rule('/customer/<num:customer_id>')
     """
     def __init__(self, map):
-        IntegerConverter.__init__(self, map, max=4292967295)
+        IntegerConverter.__init__(self, map, max=0xFFFFFFFF)
 
     def to_python(self, value):
         """Restores original number.
