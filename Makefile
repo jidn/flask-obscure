@@ -8,7 +8,7 @@
 PACKAGE =
 TESTDIR = tests
 PROJECT = Flask-Obscure
-ENV = .env
+ENV = venv
 # Override by putting on commandline:  python=python2.7
 python = python
 REQUIRE = requirements.txt
@@ -27,7 +27,7 @@ SYS_VIRTUALENV := virtualenv
 PIP := $(BIN)/pip
 TOX := $(BIN)/tox
 PYTHON := $(BIN)/$(python)
-FLAKE8 := $(BIN)/flake8
+ANALIZE := $(BIN)/pylint
 PEP257 := $(BIN)/pydocstyle
 COVERAGE := $(BIN)/coverage
 TEST_RUNNER := $(BIN)/py.test
@@ -38,10 +38,12 @@ $(TEST_RUNNER): env
 PKGDIR := $(or $(PACKAGE), ./)
 REQUIREMENTS := $(shell find ./ -name $(REQUIRE))
 SETUP_PY := $(wildcard setup.py)
-SOURCES := $(wildcard *.py)
+SOURCES := $(or $(PACKAGE), $(wildcard *.py))
+COVERAGE_RC := $(wildcard default.coveragerc)
+ANALIZE_RC := $(wildcard default.pylintrc)
 EGG_INFO := $(subst -,_,$(PROJECT)).egg-info
 COVER_ARG := --cov-report term-missing --cov=$(PKGDIR) \
-             --cov-config .coveragerc
+	$(if $(wildcard default.coveragerc), --cov-config default.coveragerc)
 
 # Flags for environment/tools
 LOG_REQUIRE := .requirements.log
@@ -76,17 +78,20 @@ help:
 	@echo "clean clean-all  Clean up and clean up removing virtualenv"
 
 ### Static Analysis & Travis CI ##############################################
-.PHONY: check flake8 pep257
-check: flake8 pep257
+.PHONY: check pylint pep257
+check: pylint pep257
 
-$(FLAKE8): $(PIP)
-	$(PIP) install --upgrade flake8 pydocstyle | tee -a $(LOG_REQUIRE)
+$(ANALIZE): $(PIP)
+	$(PIP) install --upgrade pylint pydocstyle | tee -a $(LOG_REQUIRE)
 
-flake8: $(FLAKE8)
-	$(FLAKE8) $(or $(PACKAGE), $(SOURCES)) $(TESTDIR) --ignore=$(PEP8_IGNORE)
+pylint: $(ANALIZE) $(ANALIZE_RC)
+	$(ANALIZE) $(SOURCES) $(TESTDIR) --ignore=$(PEP8_IGNORE)
 
-pep257: $(FLAKE8)
-	$(PEP257) $(or $(PACKAGE), $(SOURCES)) $(ARGS) --ignore=$(PEP257_IGNORE)
+pep257: $(ANALIZE)
+	$(PEP257) $(SOURCES) $(ARGS) --ignore=$(PEP257_IGNORE)
+
+$(ANALIZE_RC):
+	$(warning Missing project pylint configuration file default.pylintrc)
 
 ### Testing ##################################################################
 .PHONY: test coverage tox
@@ -94,13 +99,22 @@ pep257: $(FLAKE8)
 test: $(TEST_RUNNER)
 	$(TEST_RUNNER) $(args) $(TESTDIR)
 
-coverage: $(COVERAGE)
-# NOTE | If PACKAGE is root directory, ie code is not in its own directory,
-#      | then you should use a .coveragerc file to omit the ENV directory
-#      | from the coverage search.
-#      | $ echo -e "[run]\nomit=$(ENV)/*" > .coveragerc
-#      | append "--cov-config .coveragerc" to COVER_ARG
+coverage: $(COVERAGE) default.coveragerc
 	$(TEST_RUNNER) $(args) $(COVER_ARG) $(TESTDIR)
+
+default.coveragerc:
+ifeq ($(PKGDIR),./)
+ifeq (,$(wildcard $(default.coveragerc)))
+	# If PKGDIR is root directory, ie code is not in its own directory
+	# then you should use a .coveragerc file to remove the ENV directory
+	# from the coverage search.  I'll auto generate one for you.
+	$(info Rerun make to discover autocreated .coveragerc)
+	@echo -e "[run]\nomit=$(ENV)/*" > default.coveragerc
+	@cat default.coveragerc
+	@exit 68
+endif
+endif
+
 
 $(COVERAGE): env
 	$(PIP) install pytest-cov | tee -a $(LOG_REQUIRE)
