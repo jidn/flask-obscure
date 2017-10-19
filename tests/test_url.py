@@ -15,20 +15,20 @@ def app():
     obs.init_app(_app)
 
     def get_all():
-        # route('/customers/num', endpoint='cust-num')
         endpoint = request.url_rule.endpoint.split('-')[-1]
         return jsonify({'data': [c.to_dict(endpoint=endpoint)
                                  for c in customers]})
+    # Add a route endpoint for each converter
     for conv in reversed(converters):
         get_all = _app.route('/customers/%s' % conv,
                              endpoint='cust-%s' % conv)(get_all)
 
     def get_cust(customer_id):
-        # route('/customer/num/<num:customer_id>', endpoint='ids')
         customer = customers[customer_id].to_dict(False)
         rv = {'legal': "FOR INTERNAL USE ONLY! UNOBSCURED"}
         rv.update(customer)
         return jsonify(rv)
+    # Add a route endpoint for each converter
     for conv in converters:
         get_cust = _app.route('/{0}/<{0}:customer_id>'.format(conv),
                               endpoint=conv)(get_cust)
@@ -97,7 +97,7 @@ def test_obscured_json_output(app, converter):
 @pytest.mark.parametrize('url', [
         '/num/',              # missing number
         '/num/ABCDEF',        # bad no letters
-        '/num/4292967296',    # too large
+        '/num/%s' % str(int(0xFFFFFFFF) + 1),    # too large
         '/hex/abcd',          # to short
         '/hex/AABBCCDD',      # bad CAPS
         '/hex/aabbccdg',      # bad 'g'

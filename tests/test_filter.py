@@ -8,8 +8,10 @@ from flask.ext import obscure
 
 SALT = 0x1234
 FILTERS = tuple(obscure.converters.keys())
-TRANSLATE = {'num': 'transform', 'hex': 'encode_hex',
-             'b32': 'encode_base32', 'b64': 'encode_base64',
+TRANSLATE = {'num': 'transform',
+             'hex': 'encode_hex',
+             'b32': 'encode_base32',
+             'b64': 'encode_base64',
              'tame': 'encode_tame'}
 
 
@@ -31,19 +33,27 @@ def app():
 
     def invoice(customer_id):
         """Show obfuscated customer number.
-        While the route for this is obfuscated, this function actually
-        receives the customer number in its original form from the
-        url_map.coverters.
-
         Routes for each filter are created like:
             /invoice/b32/<b32:customer_id>
+            /invoice/b64/<b64:customer_id>
+            /invoice/hex/<hex:customer_id>
+            /invoice/tame/<tame:customer_id>
+
+        Arg:
+            customer_id: actual customer number
+
+            This number, while obfuscated in the URL, has been converted
+            by the in the url_map.converters at this point.
+
+        Return string:
+            {obscure method}#{obscured customerID}
         """
         encoder = request.url_rule.endpoint
         template = '{{ encoder }}#{{ customer_id|%s }}' % encoder
         return render_template_string(template, **locals())
     for f in FILTERS:
-        invoice = _app.route('/invoice/%s/<%s:customer_id>' % (f, f),
-                             endpoint=f)(invoice)
+        url = '/invoice/%s/<%s:customer_id>' % (f, f)
+        invoice = _app.route(url, endpoint=f)(invoice)
     return _app
 
 
