@@ -27,7 +27,7 @@ setup(
     author_email='clinton.james@anuit.com',
     description='Obscure numerical IDs in URLs',
     long_description=open(os.path.join(BASEDIR, 'README.rst')).read(),
-    version='1.0',
+    version=__version__,
     license='Apache License 2.0',
     keywords=['flask', 'REST', 'obfuscate', 'ID'],
     classifiers=[
