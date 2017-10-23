@@ -74,6 +74,7 @@ help:
 	@echo "             args=\"-x --pdb --ff\"  optional arguments"
 	@echo "coverage   Get coverage information, optional 'args' like test"
 	@echo "tox        Test against multiple versions of python"
+	@echo "dist       Make packages"
 	@echo "upload     Upload package to PyPI"
 	@echo "clean clean-all  Clean up and clean up removing virtualenv"
 
