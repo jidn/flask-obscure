@@ -11,7 +11,7 @@ from werkzeug.routing import BaseConverter, IntegerConverter
 from obscure import Obscure as _mod_Obscure, _base32_custom as _tame_alphabet
 
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 class Obscure(_mod_Obscure):
@@ -25,7 +25,7 @@ class Obscure(_mod_Obscure):
         """Add converters and filters to a :class:`Flask` instance.
 
         Args:
-          app: a :class:`flask:Flask' instance or None
+          app: a :class:`flask:Flask` instance or None
           salt (integer): random 32-bit integer for uniqueness
         """
         self.salt = salt
@@ -50,14 +50,16 @@ class Obscure(_mod_Obscure):
             class_name = 'Obscure' + base.__name__
             class_ = type(class_name, (base,), {'obscure': self})
             app.url_map.converters[converter_name] = class_
-            # Lambda can't use locals so we trick it here by binding
+            # Lambda can't use locals so we bind
             # the local variables to input variables.
             filter_ = (lambda x, c=class_, s=salt: c(s).to_url(x))
             app.add_template_filter(filter_, converter_name)
 
 
 class Num(IntegerConverter):
-    """Obscure interger ID and format as alternate, non-sequential number.
+    """Obscure interger ID with salted value and format as
+    an alternative, non-sequential number.
+
     Rule('/customer/<num:customer_id>')
     """
     def __init__(self, map):
@@ -99,6 +101,7 @@ class Num(IntegerConverter):
 
 class Hex(BaseConverter):
     """Obscure numerical ID and format as hex.
+
     Rule('/customer/<hex:customer_id>')
     """
     weight = 50
@@ -133,6 +136,7 @@ class Hex(BaseConverter):
 
 class Base32(BaseConverter):
     """Obscure numerical ID and format as base32.
+
     Rule('/customer/<b32:customer_id>')
     """
     weight = 50
@@ -158,6 +162,7 @@ class Base32(BaseConverter):
 
 class Base64(BaseConverter):
     """Obscure numerical ID and format as url-safe base64.
+
     Rule('/customer/<b64:customer_id>')
     """
     weight = 50
@@ -182,8 +187,9 @@ class Base64(BaseConverter):
 
 class Tame(BaseConverter):
     """Obscure numerical ID and format as a custom base32
-    with the letters 'I' and 'U' removed to eliminate common
+    with the vowels 'I', 'O', and 'U' removed to eliminate common
     offensive words.
+
     Rule('/customer/<tame:customer_id>')
     """
     weight = 50
