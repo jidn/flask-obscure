@@ -11,7 +11,7 @@ from werkzeug.routing import BaseConverter, IntegerConverter
 from obscure import Obscure as _mod_Obscure, _base32_custom as _tame_alphabet
 
 
-__version__ = '0.1.2'
+__version__ = "0.1.2"
 
 
 class Obscure(_mod_Obscure):
@@ -43,16 +43,16 @@ class Obscure(_mod_Obscure):
             KeyError: ``OBSCURE_SALT`` must be in the
              :class:`flask.Config` if it is not given as a parameter.
         """
-        salt = salt or self.salt or int(app.config['OBSCURE_SALT'])
+        salt = salt or self.salt or int(app.config["OBSCURE_SALT"])
         _mod_Obscure.__init__(self, salt)
 
         for converter_name, base in converters.items():
-            class_name = 'Obscure' + base.__name__
-            class_ = type(class_name, (base,), {'obscure': self})
+            class_name = "Obscure" + base.__name__
+            class_ = type(class_name, (base,), {"obscure": self})
             app.url_map.converters[converter_name] = class_
             # Lambda can't use locals so we bind
             # the local variables to input variables.
-            filter_ = (lambda x, c=class_, s=salt: c(s).to_url(x))
+            filter_ = lambda x, c=class_, s=salt: c(s).to_url(x)
             app.add_template_filter(filter_, converter_name)
 
 
@@ -62,6 +62,7 @@ class Num(IntegerConverter):
 
     Rule('/customer/<num:customer_id>')
     """
+
     def __init__(self, map):
         IntegerConverter.__init__(self, map, max=0xFFFFFFFF)
 
@@ -104,8 +105,9 @@ class Hex(BaseConverter):
 
     Rule('/customer/<hex:customer_id>')
     """
+
     weight = 50
-    regex = '[abcdef0123456789]{8}'
+    regex = "[abcdef0123456789]{8}"
 
     def to_python(self, value):
         """Restores original number.
@@ -139,8 +141,9 @@ class Base32(BaseConverter):
 
     Rule('/customer/<b32:customer_id>')
     """
+
     weight = 50
-    regex = '[A-Z2-7]{7}'
+    regex = "[A-Z2-7]{7}"
 
     def to_python(self, value):
         """Restores original number.
@@ -165,8 +168,9 @@ class Base64(BaseConverter):
 
     Rule('/customer/<b64:customer_id>')
     """
+
     weight = 50
-    regex = '[-_A-Za-z0-9]{6}'
+    regex = "[-_A-Za-z0-9]{6}"
 
     def to_python(self, value):
         """Restores original number.
@@ -192,8 +196,9 @@ class Tame(BaseConverter):
 
     Rule('/customer/<tame:customer_id>')
     """
+
     weight = 50
-    regex = '[%s]{7}' % _tame_alphabet
+    regex = "[%s]{7}" % _tame_alphabet
 
     def to_python(self, value):
         """Restores original number.
@@ -212,5 +217,4 @@ class Tame(BaseConverter):
         return self.obscure.encode_tame(value)
 
 
-converters = {'num': Num, 'hex': Hex, 'tame': Tame,
-              'b32': Base32, 'b64': Base64}
+converters = {"num": Num, "hex": Hex, "tame": Tame, "b32": Base32, "b64": Base64}

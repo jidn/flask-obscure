@@ -8,11 +8,13 @@ import flask_obscure as obscure
 
 SALT = 0x1234
 FILTERS = tuple(obscure.converters.keys())
-TRANSLATE = {'num': 'transform',
-             'hex': 'encode_hex',
-             'b32': 'encode_base32',
-             'b64': 'encode_base64',
-             'tame': 'encode_tame'}
+TRANSLATE = {
+    "num": "transform",
+    "hex": "encode_hex",
+    "b32": "encode_base32",
+    "b64": "encode_base64",
+    "tame": "encode_tame",
+}
 
 
 def B(s):
@@ -26,7 +28,7 @@ def make_jinja_filter_for(encoder):
     return lambda x, s=SALT, f=enc: str(getattr(Obscure(s), f)(x))
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def app():
     _app = Flask(__name__)
     obscure.Obscure(_app, SALT)  # works for test, but use flask.config
@@ -49,19 +51,20 @@ def app():
             {obscure method}#{obscured customerID}
         """
         encoder = request.url_rule.endpoint
-        template = '{{ encoder }}#{{ customer_id|%s }}' % encoder
+        template = "{{ encoder }}#{{ customer_id|%s }}" % encoder
         return render_template_string(template, **locals())
+
     for f in FILTERS:
-        url = '/invoice/%s/<%s:customer_id>' % (f, f)
+        url = "/invoice/%s/<%s:customer_id>" % (f, f)
         invoice = _app.route(url, endpoint=f)(invoice)
     return _app
 
 
-@pytest.mark.parametrize('encoder', FILTERS)
+@pytest.mark.parametrize("encoder", FILTERS)
 def test_flask_filter(app, encoder):
     obs = app.url_map.converters[encoder](SALT)
     with app.test_client() as c:
-        for customer_id in range(0, 0x10000, 0x7fe):
+        for customer_id in range(0, 0x10000, 0x7FE):
             with app.test_request_context():
                 url = url_for(encoder, customer_id=customer_id)
             rv = c.get(url)
@@ -70,7 +73,7 @@ def test_flask_filter(app, encoder):
             assert rv.data.endswith(B(obs.to_url(customer_id)))
 
 
-@pytest.mark.parametrize('encoder', FILTERS)
+@pytest.mark.parametrize("encoder", FILTERS)
 def test_jinja2_filter(encoder):
     obs = Obscure(SALT)
 
@@ -82,9 +85,9 @@ def test_jinja2_filter(encoder):
     env.filters[encoder] = jinja2_filter
     tmpl = env.from_string("{{ x|%s }}" % encoder)
 
-    for x in range(0xfe, 0x1000, 0x1fe):
+    for x in range(0xFE, 0x1000, 0x1FE):
         rv = tmpl.render(x=x)
         assert rv == conv(x)
 
     with pytest.raises(TypeError):
-        tmpl.render(x='silly string')
+        tmpl.render(x="silly string")
