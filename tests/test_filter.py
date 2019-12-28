@@ -16,9 +16,9 @@ TRANSLATE = {'num': 'transform',
 
 
 def B(s):
-    if sys.version_info.major == 2:
-        return s
-    return bytes(s, 'ascii')
+    # Yes, a proper if/else statement would be more readable, but I am
+    # doing this for coverage.  Tox would also get this.
+    return s if sys.version_info.major == 2 else bytes(s, "ascii")
 
 
 def make_jinja_filter_for(encoder):

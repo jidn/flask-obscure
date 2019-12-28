@@ -127,7 +127,3 @@ def test_bad_customer_id(app, url):
     with app.test_client() as c:
         rv = c.get(url)
         assert rv.status_code == 500
-
-if __name__ == "__main__":
-    # For testing with curl to check specific items.
-    my_app = app()

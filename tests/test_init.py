@@ -46,8 +46,8 @@ def test_obscure_init_salted():
 def test_missing_salt():
     app = make_app()
     with pytest.raises(KeyError):
-        obscure = Obscure(app)
-        obscure.transform(0)
+        Obscure(app).transform(0)
+
 
 def test_multi_apps():
     app1 = make_app()

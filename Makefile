@@ -39,11 +39,11 @@ PKGDIR := $(or $(PACKAGE), ./)
 REQUIREMENTS := $(shell find ./ -name $(REQUIRE))
 SETUP_PY := $(wildcard setup.py)
 SOURCES := $(or $(PACKAGE), $(wildcard *.py))
-COVERAGE_RC := $(wildcard default.coveragerc)
+COVERAGE_RC := $(wildcard .coveragerc)
 ANALIZE_RC := $(wildcard default.pylintrc)
 EGG_INFO := $(subst -,_,$(PROJECT)).egg-info
 COVER_ARG := --cov-report term-missing --cov=$(PKGDIR) \
-	$(if $(wildcard default.coveragerc), --cov-config default.coveragerc)
+	$(if $(wildcard $(COVERAGE_RC)), --cov-config $(COVERAGE_RC))
 
 # Flags for environment/tools
 LOG_REQUIRE := .requirements.log
@@ -100,18 +100,18 @@ $(ANALIZE_RC):
 test: $(TEST_RUNNER)
 	$(TEST_RUNNER) $(args) $(TESTDIR)
 
-coverage: $(COVERAGE) default.coveragerc
+coverage: $(COVERAGE) $(COVERAGE_RC)
 	$(TEST_RUNNER) $(args) $(COVER_ARG) $(TESTDIR)
 
-default.coveragerc:
+$(COVERAGE_RC):
 ifeq ($(PKGDIR),./)
-ifeq (,$(wildcard $(default.coveragerc)))
+ifeq (,$(wildcard $(COVERAGE_RC)))
 	# If PKGDIR is root directory, ie code is not in its own directory
 	# then you should use a .coveragerc file to remove the ENV directory
 	# from the coverage search.  I'll auto generate one for you.
-	$(info Rerun make to discover autocreated .coveragerc)
-	@echo -e "[run]\nomit=$(ENV)/*" > default.coveragerc
-	@cat default.coveragerc
+	$(info Rerun make to discover autocreated $(COVERAGE_RC) )
+	@echo -e "[run]\nomit=$(ENV)/*\nsetup.py" >$(COVERAGE_RC)
+	@cat $(COVERAGE_RC)
 	@exit 68
 endif
 endif
