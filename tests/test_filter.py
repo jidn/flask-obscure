@@ -4,7 +4,7 @@ from flask import Flask, url_for, request, render_template_string
 from jinja2 import Environment
 import context
 from obscure import Obscure
-from flask.ext import obscure
+import flask_obscure as obscure
 
 SALT = 0x1234
 FILTERS = tuple(obscure.converters.keys())

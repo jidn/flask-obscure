@@ -1,7 +1,7 @@
 import pytest
 import json
 from flask import Flask, url_for, request, jsonify
-from flask.ext.obscure import Obscure, converters as _converters
+from flask_obscure import Obscure, converters as _converters
 
 customer_names = ['Adam', 'Betty', 'Carlos']
 converters = tuple(_converters.keys())
