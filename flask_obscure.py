@@ -11,7 +11,7 @@ from werkzeug.routing import BaseConverter, IntegerConverter
 from obscure import Obscure as _mod_Obscure, _base32_custom as _tame_alphabet
 
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 
 class Obscure(_mod_Obscure):
